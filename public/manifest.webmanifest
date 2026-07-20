@@ -1,0 +1,18 @@
+{
+  "name": "Tailor Shop ERP",
+  "short_name": "Tailor ERP",
+  "description": "Tailor Shop ERP — orders, workers, salesmen, cashbook, and reports.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#f8fafc",
+  "theme_color": "#0284c7",
+  "orientation": "portrait",
+  "icons": [
+    {
+      "src": "/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}
