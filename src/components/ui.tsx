@@ -86,30 +86,27 @@ export function Modal({ open, onClose, title, children, footer, size = 'md' }: {
   }, [open, onClose]);
 
   if (!open) return null;
-  const w = { sm: 'sm:max-w-[24rem]', md: 'sm:max-w-[36rem]', lg: 'sm:max-w-[46rem]', xl: 'sm:max-w-[64rem]' }[size];
+  // Panel width scales with `size` on larger screens, but is always full-width
+  // on small screens so the drawer stays usable on phones.
+  const w = { sm: 'sm:w-[24rem]', md: 'sm:w-[30rem]', lg: 'sm:w-[38rem]', xl: 'sm:w-[52rem]' }[size];
   return (
     <div className="fixed inset-0 z-[60]">
       <div className="absolute inset-0 bg-slate-950/60 backdrop-blur-sm" onClick={onClose} />
-      <div className="relative flex h-full w-full items-end justify-center p-0 sm:items-center sm:p-3">
+      <div className="relative flex h-full w-full justify-end">
         {/*
           The overlay above is `fixed inset-0`, so it is always pinned exactly to
           the viewport edges — meaning `h-full` here always equals the real,
           current viewport height, with no dependency on vh/dvh units (which can
-          be unreliable depending on browser/bundler support). The card below
-          uses `max-h-full`, which is a percentage of this same reliable box, so
-          it can never grow taller than the visible screen. Header and footer are
-          flex-shrink-0 (always visible, never scroll away), and only the middle
-          body scrolls.
+          be unreliable depending on browser/bundler support). The panel below
+          is `h-full` of this same reliable box and slides in from the right.
+          Header and footer are flex-shrink-0 (always visible, never scroll
+          away), and only the middle body scrolls.
         */}
         <div
-          className={`relative flex max-h-full w-full flex-col overflow-hidden rounded-t-3xl border border-slate-200/80 bg-white shadow-2xl dark:border-slate-800 dark:bg-slate-900 sm:max-h-[calc(100%-1.5rem)] sm:rounded-2xl ${w}`}
+          className={`animate-slide-in-right relative flex h-full w-full flex-col overflow-hidden border-l border-slate-200/80 bg-white shadow-2xl dark:border-slate-800 dark:bg-slate-900 ${w}`}
           role="dialog"
           aria-modal="true"
         >
-          <div className="flex-shrink-0 flex justify-center pt-3 pb-1 sm:hidden">
-            <div className="h-1.5 w-12 rounded-full bg-slate-300 dark:bg-slate-700" />
-          </div>
-
           {/* Header: fixed, never scrolls */}
           <div className="flex-shrink-0 flex items-center justify-between border-b border-slate-200 bg-white px-4 py-3 dark:border-slate-800 dark:bg-slate-900 sm:px-5 sm:py-4">
             <h3 className="text-base font-semibold text-slate-900 dark:text-white sm:text-lg">{title}</h3>
