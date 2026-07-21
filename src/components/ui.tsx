@@ -86,24 +86,21 @@ export function Modal({ open, onClose, title, children, footer, size = 'md' }: {
   }, [open, onClose]);
 
   if (!open) return null;
-  // Panel width on tablet/desktop (sm+), where it slides in from the right.
-  const w = { sm: 'sm:w-[24rem]', md: 'sm:w-[30rem]', lg: 'sm:w-[38rem]', xl: 'sm:w-[52rem]' }[size];
+  // Card width on tablet/desktop (sm+).
+  const w = { sm: 'sm:max-w-[24rem]', md: 'sm:max-w-[36rem]', lg: 'sm:max-w-[46rem]', xl: 'sm:max-w-[64rem]' }[size];
   return (
     <div className="fixed inset-0 z-[60]">
       <div className="absolute inset-0 bg-slate-950/60 backdrop-blur-sm" onClick={onClose} />
       {/*
         Layout differs by breakpoint on purpose:
-        - Phones (below sm): a bottom sheet. This is the pattern people already
-          know from every native app, it never eats the whole screen like a
-          new "page" would, and the keyboard pushing content up can't hide the
-          footer because the sheet is capped at 90% of the viewport rather
-          than stretching to fill it.
-        - sm and up: a right-side drawer, since there's enough width for it
-          to sit alongside the rest of the app instead of covering it.
+        - Phones (below sm): a bottom sheet, capped at 90% of the viewport so
+          it never stretches full-screen and the keyboard can't push the
+          footer out of view.
+        - sm and up: a centered card, rounded on all corners, sized by `size`.
       */}
-      <div className="relative flex h-full w-full items-end justify-center sm:items-stretch sm:justify-end">
+      <div className="relative flex h-full w-full items-end justify-center p-0 sm:items-center sm:p-4">
         <div
-          className={`animate-slide-up sm:animate-slide-in-right relative flex max-h-[90vh] w-full flex-col overflow-hidden rounded-t-3xl border border-slate-200/80 bg-white shadow-2xl dark:border-slate-800 dark:bg-slate-900 sm:max-h-full sm:h-full sm:rounded-none sm:rounded-l-3xl sm:border-l sm:border-t-0 ${w}`}
+          className={`animate-slide-up sm:animate-fade relative flex max-h-[90vh] w-full flex-col overflow-hidden rounded-t-3xl border border-slate-200/80 bg-white shadow-2xl dark:border-slate-800 dark:bg-slate-900 sm:max-h-[calc(100%-2rem)] sm:rounded-2xl ${w}`}
           role="dialog"
           aria-modal="true"
         >
@@ -113,9 +110,9 @@ export function Modal({ open, onClose, title, children, footer, size = 'md' }: {
           </div>
 
           {/* Header: fixed, never scrolls */}
-          <div className="flex-shrink-0 flex items-center justify-between border-b border-slate-200 bg-gradient-to-r from-sky-50 to-white px-4 py-3 dark:border-slate-800 dark:from-sky-950/30 dark:to-slate-900 sm:px-5 sm:py-4">
+          <div className="flex-shrink-0 flex items-center justify-between border-b border-slate-200 bg-white px-4 py-3 dark:border-slate-800 dark:bg-slate-900 sm:px-5 sm:py-4">
             <h3 className="text-base font-bold text-slate-900 dark:text-white sm:text-lg">{title}</h3>
-            <button onClick={onClose} className="rounded-full p-2 text-slate-500 transition hover:bg-white/80 active:scale-90 dark:hover:bg-slate-800">
+            <button onClick={onClose} className="rounded-full p-2 text-slate-500 transition hover:bg-slate-100 active:scale-90 dark:hover:bg-slate-800">
               <X size={20} />
             </button>
           </div>
