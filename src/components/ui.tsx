@@ -86,31 +86,36 @@ export function Modal({ open, onClose, title, children, footer, size = 'md' }: {
   }, [open, onClose]);
 
   if (!open) return null;
-  // Panel width scales with `size` on larger screens, but is always full-width
-  // on small screens so the drawer stays usable on phones.
+  // Panel width on tablet/desktop (sm+), where it slides in from the right.
   const w = { sm: 'sm:w-[24rem]', md: 'sm:w-[30rem]', lg: 'sm:w-[38rem]', xl: 'sm:w-[52rem]' }[size];
   return (
     <div className="fixed inset-0 z-[60]">
       <div className="absolute inset-0 bg-slate-950/60 backdrop-blur-sm" onClick={onClose} />
-      <div className="relative flex h-full w-full justify-end">
-        {/*
-          The overlay above is `fixed inset-0`, so it is always pinned exactly to
-          the viewport edges — meaning `h-full` here always equals the real,
-          current viewport height, with no dependency on vh/dvh units (which can
-          be unreliable depending on browser/bundler support). The panel below
-          is `h-full` of this same reliable box and slides in from the right.
-          Header and footer are flex-shrink-0 (always visible, never scroll
-          away), and only the middle body scrolls.
-        */}
+      {/*
+        Layout differs by breakpoint on purpose:
+        - Phones (below sm): a bottom sheet. This is the pattern people already
+          know from every native app, it never eats the whole screen like a
+          new "page" would, and the keyboard pushing content up can't hide the
+          footer because the sheet is capped at 90% of the viewport rather
+          than stretching to fill it.
+        - sm and up: a right-side drawer, since there's enough width for it
+          to sit alongside the rest of the app instead of covering it.
+      */}
+      <div className="relative flex h-full w-full items-end justify-center sm:items-stretch sm:justify-end">
         <div
-          className={`animate-slide-in-right relative flex h-full w-full flex-col overflow-hidden border-l border-slate-200/80 bg-white shadow-2xl dark:border-slate-800 dark:bg-slate-900 ${w}`}
+          className={`animate-slide-up sm:animate-slide-in-right relative flex max-h-[90vh] w-full flex-col overflow-hidden rounded-t-3xl border border-slate-200/80 bg-white shadow-2xl dark:border-slate-800 dark:bg-slate-900 sm:max-h-full sm:h-full sm:rounded-none sm:rounded-l-3xl sm:border-l sm:border-t-0 ${w}`}
           role="dialog"
           aria-modal="true"
         >
+          {/* Grab handle, phones only */}
+          <div className="flex-shrink-0 flex justify-center pt-3 pb-1 sm:hidden">
+            <div className="h-1.5 w-12 rounded-full bg-slate-300 dark:bg-slate-700" />
+          </div>
+
           {/* Header: fixed, never scrolls */}
-          <div className="flex-shrink-0 flex items-center justify-between border-b border-slate-200 bg-white px-4 py-3 dark:border-slate-800 dark:bg-slate-900 sm:px-5 sm:py-4">
-            <h3 className="text-base font-semibold text-slate-900 dark:text-white sm:text-lg">{title}</h3>
-            <button onClick={onClose} className="rounded-lg p-2 text-slate-500 transition hover:bg-slate-100 active:scale-90 dark:hover:bg-slate-800">
+          <div className="flex-shrink-0 flex items-center justify-between border-b border-slate-200 bg-gradient-to-r from-sky-50 to-white px-4 py-3 dark:border-slate-800 dark:from-sky-950/30 dark:to-slate-900 sm:px-5 sm:py-4">
+            <h3 className="text-base font-bold text-slate-900 dark:text-white sm:text-lg">{title}</h3>
+            <button onClick={onClose} className="rounded-full p-2 text-slate-500 transition hover:bg-white/80 active:scale-90 dark:hover:bg-slate-800">
               <X size={20} />
             </button>
           </div>
