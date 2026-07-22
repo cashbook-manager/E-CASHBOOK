@@ -1,5 +1,5 @@
-import { type ReactNode, type ButtonHTMLAttributes, type InputHTMLAttributes, type TextareaHTMLAttributes, type SelectHTMLAttributes, useEffect, useRef } from 'react';
-import { ArrowLeft } from 'lucide-react';
+import { type ReactNode, type ButtonHTMLAttributes, type InputHTMLAttributes, type TextareaHTMLAttributes, type SelectHTMLAttributes, useEffect } from 'react';
+import { X } from 'lucide-react';
 import type { PaymentAccount, Shop } from '../lib/types';
 
 export function Card({ children, className = '' }: { children: ReactNode; className?: string }) {
@@ -74,70 +74,69 @@ export function Badge({ children, color = 'slate', className = '' }: { children:
 }
 
 export function Modal({ open, onClose, title, children, footer, size = 'md' }: { open: boolean; onClose: () => void; title: string; children: ReactNode; footer?: ReactNode; size?: 'sm' | 'md' | 'lg' | 'xl' }) {
-  const closedByBackButton = useRef(false);
-
   useEffect(() => {
     if (!open) return;
     const handler = (e: KeyboardEvent) => e.key === 'Escape' && onClose();
     window.addEventListener('keydown', handler);
     document.body.style.overflow = 'hidden';
-
-    // Push a history entry so the device/browser back button closes this
-    // page instead of leaving the app — this is what makes it feel and
-    // behave like navigating to a real "next page" rather than a popup.
-    window.history.pushState({ formPage: true }, '');
-    const popHandler = () => { closedByBackButton.current = true; onClose(); };
-    window.addEventListener('popstate', popHandler);
-
     return () => {
       window.removeEventListener('keydown', handler);
-      window.removeEventListener('popstate', popHandler);
       document.body.style.overflow = '';
-      // Closing any other way (Save, Cancel, the back arrow) should also
-      // clean up the history entry we pushed, so a later back-button press
-      // doesn't just reopen this form.
-      if (!closedByBackButton.current) {
-        window.history.back();
-      }
-      closedByBackButton.current = false;
     };
   }, [open, onClose]);
 
   if (!open) return null;
-  // Content column width on larger screens — keeps long forms readable
-  // instead of stretching edge-to-edge, while the header/footer bars still
-  // span the full page width like a real page would.
-  const maxW = { sm: 'sm:max-w-[28rem]', md: 'sm:max-w-[40rem]', lg: 'sm:max-w-[50rem]', xl: 'sm:max-w-[68rem]' }[size];
+  const w = { sm: 'sm:max-w-[24rem]', md: 'sm:max-w-[36rem]', lg: 'sm:max-w-[46rem]', xl: 'sm:max-w-[64rem]' }[size];
   return (
-    <div className="animate-slide-in-right fixed inset-0 z-[60] flex flex-col bg-white dark:bg-slate-900">
-      {/* Header: fixed page top bar, never scrolls */}
-      <div className="flex-shrink-0 flex items-center gap-2 border-b border-slate-200 bg-white px-3 py-3 dark:border-slate-800 dark:bg-slate-900 sm:px-5 sm:py-4">
-        <button onClick={onClose} className="-ml-1 rounded-full p-2 text-slate-600 transition hover:bg-slate-100 active:scale-90 dark:text-slate-300 dark:hover:bg-slate-800">
-          <ArrowLeft size={20} />
-        </button>
-        <h3 className="text-base font-bold text-slate-900 dark:text-white sm:text-lg">{title}</h3>
-      </div>
-
-      {/* Body: the only scrollable region. overflow-y-scroll (not auto) plus
-          the inline WebkitOverflowScrolling/touchAction guarantee real,
-          smooth scrolling on every device, not just ones where the browser
-          happens to infer it. */}
-      <div
-        className="flex-1 min-h-0 overflow-y-scroll overscroll-contain"
-        style={{ WebkitOverflowScrolling: 'touch', touchAction: 'pan-y' }}
-      >
-        <div className={`mx-auto w-full px-4 py-4 sm:px-6 sm:py-6 ${maxW}`}>{children}</div>
-      </div>
-
-      {/* Footer: fixed at the bottom of the page, always visible, never scrolls */}
-      {footer && (
+    <div className="fixed inset-0 z-[60]">
+      <div className="absolute inset-0 bg-slate-950/60 backdrop-blur-sm" onClick={onClose} />
+      <div className="relative flex h-full w-full items-end justify-center p-0 sm:items-center sm:p-3">
+        {/*
+          The overlay above is `fixed inset-0`, so it is always pinned exactly to
+          the viewport edges — meaning `h-full` here always equals the real,
+          current viewport height, with no dependency on vh/dvh units (which can
+          be unreliable depending on browser/bundler support). The card below
+          uses `max-h-full`, which is a percentage of this same reliable box, so
+          it can never grow taller than the visible screen. Header and the action
+          bar are flex-shrink-0 (always visible, never scroll away, and never get
+          hidden behind the on-screen keyboard on phones since they sit at the
+          TOP of the card, not the bottom). Only the middle body scrolls.
+        */}
         <div
-          className="flex-shrink-0 border-t border-slate-200 bg-white px-4 py-3 dark:border-slate-800 dark:bg-slate-900 sm:px-5 sm:py-4"
-          style={{ paddingBottom: 'max(0.75rem, env(safe-area-inset-bottom))' }}
+          className={`relative flex max-h-full w-full flex-col overflow-hidden rounded-t-3xl border border-slate-200/80 bg-white shadow-2xl dark:border-slate-800 dark:bg-slate-900 sm:max-h-[calc(100%-1.5rem)] sm:rounded-2xl ${w}`}
+          role="dialog"
+          aria-modal="true"
         >
-          <div className={`mx-auto w-full ${maxW}`}>{footer}</div>
+          <div className="flex-shrink-0 flex justify-center pt-3 pb-1 sm:hidden">
+            <div className="h-1.5 w-12 rounded-full bg-slate-300 dark:bg-slate-700" />
+          </div>
+
+          {/* Header: fixed, never scrolls */}
+          <div className={`flex-shrink-0 flex items-center justify-between gap-2 border-slate-200 bg-white px-4 py-3 dark:border-slate-800 dark:bg-slate-900 sm:px-5 sm:py-4 ${footer ? '' : 'border-b'}`}>
+            <h3 className="text-base font-semibold text-slate-900 dark:text-white sm:text-lg truncate">{title}</h3>
+            <button onClick={onClose} className="flex-shrink-0 rounded-lg p-2 text-slate-500 transition hover:bg-slate-100 active:scale-90 dark:hover:bg-slate-800">
+              <X size={20} />
+            </button>
+          </div>
+
+          {/* Action bar: moved here (top of the popup, right under the title) instead
+              of a bottom footer, so Save/Cancel are always on-screen — including on
+              phones where the keyboard would otherwise cover a bottom-anchored footer. */}
+          {footer && (
+            <div className="flex-shrink-0 border-b border-t border-slate-200 bg-slate-50/80 px-4 py-3 dark:border-slate-800 dark:bg-slate-900/60 sm:px-5 sm:py-3">
+              {footer}
+            </div>
+          )}
+
+          {/* Body: the only scrollable region — every field remains reachable by scrolling here */}
+          <div
+            className="flex-1 min-h-0 overflow-y-auto overscroll-contain px-4 py-4 sm:px-5 sm:py-5"
+            style={{ paddingBottom: 'max(1rem, env(safe-area-inset-bottom))' }}
+          >
+            {children}
+          </div>
         </div>
-      )}
+      </div>
     </div>
   );
 }
