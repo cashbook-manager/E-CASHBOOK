@@ -153,14 +153,27 @@ export function OrderForm({
     const delta = newMoneyIn - prevMoneyIn;
 
     if (order) {
-      await supabase.from('orders').update(payload).eq('id', order.id);
-      await supabase.from('order_workers').delete().eq('order_id', order.id);
+      const { error: orderErr } = await supabase.from('orders').update(payload).eq('id', order.id);
+      if (orderErr) {
+        alert(`Could not save order: ${orderErr.message}`);
+        setSaving(false);
+        return;
+      }
+      const { error: delErr } = await supabase.from('order_workers').delete().eq('order_id', order.id);
+      if (delErr) console.error('Failed to clear old worker assignments:', delErr.message);
       await supabase.from('order_timeline').insert({
         order_id: order.id, action: 'Order Updated', detail: 'Order details updated', person: 'Admin',
       });
+      const workerErrors: string[] = [];
       for (const a of owPayload) {
         const { error } = await supabase.from('order_workers').insert({ ...a, order_id: order.id });
-        if (error) console.error('Failed to save worker assignment:', error.message);
+        if (error) {
+          console.error('Failed to save worker assignment:', error.message);
+          workerErrors.push(error.message);
+        }
+      }
+      if (workerErrors.length > 0) {
+        alert(`Order saved, but ${workerErrors.length} worker assignment(s) failed to save:\n${workerErrors.join('\n')}`);
       }
       if (selectedAccount && Math.abs(delta) > 0.0001) {
         await recordTransaction({
@@ -172,7 +185,12 @@ export function OrderForm({
         });
       }
     } else {
-      const { data } = await supabase.from('orders').insert(payload).select('*').maybeSingle();
+      const { data, error: insertErr } = await supabase.from('orders').insert(payload).select('*').maybeSingle();
+      if (insertErr) {
+        alert(`Could not create order: ${insertErr.message}`);
+        setSaving(false);
+        return;
+      }
       if (data) {
         const newOrder = data as Order;
         await supabase.from('order_timeline').insert({
