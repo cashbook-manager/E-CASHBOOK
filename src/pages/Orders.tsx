@@ -55,6 +55,22 @@ export function Orders() {
     data.refresh();
   }
 
+  // After editing an existing order (assigning a worker, changing status, etc.), reopen its
+  // Detail panel with the freshly-saved row instead of dropping back to the bare order list —
+  // that's what made worker assignments look like they'd vanished after Save.
+  function handleOrderSaved() {
+    const wasEditingId = editing?.id;
+    supabase.from('orders').select('*').order('created_at', { ascending: false }).then(({ data: d }) => {
+      const list = (d as Order[]) || [];
+      setOrders(list);
+      if (wasEditingId) {
+        const fresh = list.find((o) => o.id === wasEditingId);
+        if (fresh) setSelected(fresh);
+      }
+    });
+    data.refresh();
+  }
+
   return (
     <div className="space-y-4 animate-fade">
       <div className="flex items-center justify-between flex-wrap gap-2">
@@ -109,7 +125,7 @@ export function Orders() {
           salesmen={data.salesmen}
           workers={data.workers}
           onClose={() => setFormOpen(false)}
-          onSaved={refresh}
+          onSaved={handleOrderSaved}
         />
       )}
       {selected && (
