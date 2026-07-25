@@ -282,7 +282,7 @@ function EntryForm({ entry, onClose, onSaved }: { entry: CashbookEntry | null; o
     <Modal
       open={true} onClose={onClose} title={entry ? 'Edit Entry' : 'New Entry'}
       footer={
-        <div className="flex flex-col sm:flex-row justify-end gap-2">
+        <div className="flex flex-wrap items-center justify-end gap-2">
           <Button variant="ghost" onClick={onClose}>Cancel</Button>
           <Button onClick={save} disabled={saving}>{saving ? 'Saving…' : 'Save'}</Button>
         </div>
