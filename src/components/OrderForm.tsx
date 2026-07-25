@@ -206,7 +206,7 @@ export function OrderForm({
     <Modal
       open={open} onClose={onClose} title={order ? 'Edit Order' : 'New Order'} size="lg"
       footer={
-        <div className="flex flex-col sm:flex-row justify-end gap-2">
+        <div className="flex flex-wrap items-center justify-end gap-2">
           <Button variant="ghost" onClick={onClose}>Cancel</Button>
           <Button onClick={save} disabled={saving || !form.receipt_number || !form.customer_name}>
             {saving ? 'Saving…' : order ? 'Update Order' : 'Create Order'}
