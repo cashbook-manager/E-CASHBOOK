@@ -139,10 +139,12 @@ export function OrderForm({
       shop_id: selectedAccount?.shop_id || null,
     };
 
-    const owPayload = assignments.map((a) => ({
-      worker_id: a.worker_id, category: a.category, design_number: a.design_number || '',
-      quantity: Number(a.quantity) || 1, rate: Number(a.rate) || 0, submitted: false,
-    }));
+    const owPayload = assignments
+      .filter((a) => a.worker_id) // drop rows where no worker was picked from the dropdown
+      .map((a) => ({
+        worker_id: a.worker_id, category: a.category, design_number: a.design_number || '',
+        quantity: Number(a.quantity) || 1, rate: Number(a.rate) || 0, submitted: false,
+      }));
 
     // Money in from this order = advance + additional_payment (readymade/fabric sales
     // are entered entirely as `total_amount` with `advance` covering the full sale).
@@ -157,7 +159,8 @@ export function OrderForm({
         order_id: order.id, action: 'Order Updated', detail: 'Order details updated', person: 'Admin',
       });
       for (const a of owPayload) {
-        await supabase.from('order_workers').insert({ ...a, order_id: order.id });
+        const { error } = await supabase.from('order_workers').insert({ ...a, order_id: order.id });
+        if (error) console.error('Failed to save worker assignment:', error.message);
       }
       if (selectedAccount && Math.abs(delta) > 0.0001) {
         await recordTransaction({
@@ -176,7 +179,8 @@ export function OrderForm({
           order_id: newOrder.id, action: 'Order Created', detail: `Receipt #${newOrder.receipt_number}`, person: 'Admin',
         });
         for (const a of owPayload) {
-          await supabase.from('order_workers').insert({ ...a, order_id: newOrder.id });
+          const { error } = await supabase.from('order_workers').insert({ ...a, order_id: newOrder.id });
+          if (error) console.error('Failed to save worker assignment:', error.message);
           const w = workers.find((x) => x.id === a.worker_id);
           await supabase.from('order_timeline').insert({
             order_id: newOrder.id, action: 'Worker Assigned', detail: `${a.category}: ${w?.name || ''}`, person: 'Admin',
