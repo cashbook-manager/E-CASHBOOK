@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react';
-import { Wallet, Landmark, CreditCard, MoreHorizontal, AlertTriangle, CheckCircle2 } from 'lucide-react';
+import { Wallet, Landmark, CreditCard, MoreHorizontal, AlertTriangle } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { recordTransaction } from '../lib/transactions';
 import { usePaymentAccounts } from '../lib/hooks';
@@ -153,14 +153,14 @@ export function DeliveryPaymentModal({
       size="md"
       footer={
         step === 'confirm' ? (
-          <div className="flex justify-end gap-2">
+          <div className="flex flex-wrap items-center justify-end gap-2">
             <Button variant="ghost" onClick={onClose}>Cancel</Button>
             <Button onClick={handleConfirmPayment} disabled={saving}>
               {saving ? 'Saving…' : 'Confirm'}
             </Button>
           </div>
         ) : choice === 'writeoff' ? (
-          <div className="flex justify-end gap-2">
+          <div className="flex flex-wrap items-center justify-end gap-2">
             <Button variant="ghost" onClick={() => setChoice(null)}>Back</Button>
             <Button variant="danger" onClick={handleWriteOffConfirm} disabled={saving}>
               {saving ? 'Saving…' : 'Confirm Write-Off'}
