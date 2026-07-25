@@ -97,10 +97,9 @@ export function Modal({ open, onClose, title, children, footer, size = 'md' }: {
           current viewport height, with no dependency on vh/dvh units (which can
           be unreliable depending on browser/bundler support). The card below
           uses `max-h-full`, which is a percentage of this same reliable box, so
-          it can never grow taller than the visible screen. Header and the action
-          bar are flex-shrink-0 (always visible, never scroll away, and never get
-          hidden behind the on-screen keyboard on phones since they sit at the
-          TOP of the card, not the bottom). Only the middle body scrolls.
+          it can never grow taller than the visible screen. Header and footer are
+          flex-shrink-0 (always visible, never scroll away), and only the middle
+          body scrolls.
         */}
         <div
           className={`relative flex max-h-full w-full flex-col overflow-hidden rounded-t-3xl border border-slate-200/80 bg-white shadow-2xl dark:border-slate-800 dark:bg-slate-900 sm:max-h-[calc(100%-1.5rem)] sm:rounded-2xl ${w}`}
@@ -111,24 +110,19 @@ export function Modal({ open, onClose, title, children, footer, size = 'md' }: {
             <div className="h-1.5 w-12 rounded-full bg-slate-300 dark:bg-slate-700" />
           </div>
 
-          {/* Header: fixed, never scrolls */}
-          <div className={`flex-shrink-0 flex items-center justify-between gap-2 border-slate-200 bg-white px-4 py-3 dark:border-slate-800 dark:bg-slate-900 sm:px-5 sm:py-4 ${footer ? '' : 'border-b'}`}>
-            <h3 className="text-base font-semibold text-slate-900 dark:text-white sm:text-lg truncate">{title}</h3>
-            <button onClick={onClose} className="flex-shrink-0 rounded-lg p-2 text-slate-500 transition hover:bg-slate-100 active:scale-90 dark:hover:bg-slate-800">
-              <X size={20} />
-            </button>
+          {/* Header: sticky, never scrolls. Title on the left; Save/Cancel actions + close button
+              on the right, all in one compact bar — this is what used to be the bottom "footer". */}
+          <div className="flex-shrink-0 flex items-center justify-between gap-3 border-b border-slate-200 bg-white px-4 py-3 dark:border-slate-800 dark:bg-slate-900 sm:px-5 sm:py-4">
+            <h3 className="min-w-0 flex-1 truncate text-base font-semibold text-slate-900 dark:text-white sm:text-lg">{title}</h3>
+            <div className="flex flex-shrink-0 flex-wrap items-center justify-end gap-2">
+              {footer}
+              <button onClick={onClose} className="rounded-lg p-2 text-slate-500 transition hover:bg-slate-100 active:scale-90 dark:hover:bg-slate-800">
+                <X size={20} />
+              </button>
+            </div>
           </div>
 
-          {/* Action bar: moved here (top of the popup, right under the title) instead
-              of a bottom footer, so Save/Cancel are always on-screen — including on
-              phones where the keyboard would otherwise cover a bottom-anchored footer. */}
-          {footer && (
-            <div className="flex-shrink-0 border-b border-t border-slate-200 bg-slate-50/80 px-4 py-3 dark:border-slate-800 dark:bg-slate-900/60 sm:px-5 sm:py-3">
-              {footer}
-            </div>
-          )}
-
-          {/* Body: the only scrollable region — every field remains reachable by scrolling here */}
+          {/* Body: the only scrollable region */}
           <div
             className="flex-1 min-h-0 overflow-y-auto overscroll-contain px-4 py-4 sm:px-5 sm:py-5"
             style={{ paddingBottom: 'max(1rem, env(safe-area-inset-bottom))' }}
