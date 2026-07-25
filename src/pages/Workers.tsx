@@ -135,7 +135,7 @@ function WorkerForm({ open, worker, shops, onClose, onSaved }: { open: boolean; 
     <Modal
       open={open} onClose={onClose} title={worker ? 'Edit Worker' : 'Add Worker'}
       footer={
-        <div className="flex flex-col sm:flex-row justify-end gap-2">
+        <div className="flex flex-wrap items-center justify-end gap-2">
           <Button variant="ghost" onClick={onClose}>Cancel</Button>
           <Button onClick={save} disabled={saving || !form.name}>{saving ? 'Saving…' : 'Save'}</Button>
         </div>
@@ -459,7 +459,7 @@ function DesignForm({ workerId, onClose, onSaved }: { workerId: string; onClose:
     <Modal
       open={true} onClose={onClose} title="Add Design Number"
       footer={
-        <div className="flex justify-end gap-2">
+        <div className="flex flex-wrap items-center justify-end gap-2">
           <Button variant="ghost" onClick={onClose}>Cancel</Button>
           <Button onClick={save} disabled={!form.design_number}>Save</Button>
         </div>
@@ -517,7 +517,7 @@ function AdvanceForm({ workerId, workerName, onClose, onSaved }: { workerId: str
     <Modal
       open={true} onClose={onClose} title="Salary Advance"
       footer={
-        <div className="flex justify-end gap-2">
+        <div className="flex flex-wrap items-center justify-end gap-2">
           <Button variant="ghost" onClick={onClose}>Cancel</Button>
           <Button onClick={save} disabled={saving}>{saving ? 'Saving…' : 'Save'}</Button>
         </div>
@@ -590,7 +590,7 @@ function SettlementForm({ workerId, workerName, totalEarned, advanceTotal, netPa
     <Modal
       open={true} onClose={onClose} title="New Settlement"
       footer={
-        <div className="flex justify-end gap-2">
+        <div className="flex flex-wrap items-center justify-end gap-2">
           <Button variant="ghost" onClick={onClose}>Cancel</Button>
           <Button onClick={save} disabled={saving || finalAmount <= 0}>{saving ? 'Saving…' : 'Pay Salary'}</Button>
         </div>
