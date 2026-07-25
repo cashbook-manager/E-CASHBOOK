@@ -130,7 +130,7 @@ function SalesmanForm({ salesman, shops, onClose, onSaved }: { salesman: Salesma
     <Modal
       open={true} onClose={onClose} title={salesman ? 'Edit Salesman' : 'Add Salesman'}
       footer={
-        <div className="flex flex-col sm:flex-row justify-end gap-2">
+        <div className="flex flex-wrap items-center justify-end gap-2">
           <Button variant="ghost" onClick={onClose}>Cancel</Button>
           <Button onClick={save} disabled={saving || !form.name}>{saving ? 'Saving…' : 'Save'}</Button>
         </div>
@@ -395,7 +395,7 @@ function LedgerForm({ salesmanId, salesmanName, onClose, onSaved }: { salesmanId
     <Modal
       open={true} onClose={onClose} title="Record Salary Payment"
       footer={
-        <div className="flex justify-end gap-2">
+        <div className="flex flex-wrap items-center justify-end gap-2">
           <Button variant="ghost" onClick={onClose}>Cancel</Button>
           <Button onClick={save} disabled={saving}>{saving ? 'Saving…' : 'Save'}</Button>
         </div>
@@ -458,7 +458,7 @@ function SalesmanAdvanceForm({ salesmanId, salesmanName, onClose, onSaved }: { s
     <Modal
       open={true} onClose={onClose} title="Salary Advance"
       footer={
-        <div className="flex justify-end gap-2">
+        <div className="flex flex-wrap items-center justify-end gap-2">
           <Button variant="ghost" onClick={onClose}>Cancel</Button>
           <Button onClick={save} disabled={saving}>{saving ? 'Saving…' : 'Save'}</Button>
         </div>
@@ -476,5 +476,3 @@ function SalesmanAdvanceForm({ salesmanId, salesmanName, onClose, onSaved }: { s
     </Modal>
   );
 }
-
-
