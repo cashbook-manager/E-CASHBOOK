@@ -237,7 +237,20 @@ export function OrderDetail({
         </div>
       ) : tab === 'workers' ? (
         <div className="space-y-2">
-          {assignments.length === 0 && <p className="text-center text-slate-500 py-4">No workers assigned</p>}
+          {assignments.length === 0 && (
+            <div className="text-center py-8">
+              {order.sale_type && order.sale_type !== 'tailoring' ? (
+                <p className="text-slate-500 text-sm max-w-xs mx-auto">
+                  Worker assignment isn't available for <span className="font-semibold capitalize">{order.sale_type}</span> orders — only Tailoring orders track piece-rate workers.
+                </p>
+              ) : (
+                <>
+                  <p className="text-slate-500 mb-3">No workers assigned</p>
+                  <Button variant="ghost" onClick={() => onEdit(order)}><Pencil size={15} /> Assign a Worker</Button>
+                </>
+              )}
+            </div>
+          )}
           {assignments.map((a) => {
             const w = workers.find((x) => x.id === a.worker_id);
             const lineTotal = (Number(a.quantity) || 0) * (Number(a.rate) || 0);
