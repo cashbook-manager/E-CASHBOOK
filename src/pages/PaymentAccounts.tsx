@@ -238,7 +238,7 @@ function AccountFormModal({ type, editing, shops, onClose, onSaved }: {
     <Modal
       open onClose={onClose} title={editing ? `Edit ${titleLabel}` : `Add ${titleLabel}`}
       footer={
-        <div className="flex flex-col sm:flex-row justify-end gap-2">
+        <div className="flex flex-wrap items-center justify-end gap-2">
           <Button variant="ghost" onClick={onClose}>Cancel</Button>
           <Button onClick={save} disabled={saving || !form.shop_id || !form.name}>{saving ? 'Saving…' : 'Save'}</Button>
         </div>
