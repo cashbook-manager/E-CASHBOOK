@@ -305,6 +305,7 @@ export function OrderForm({
                   const w = a.worker_id ? workers.find((x) => x.id === a.worker_id) : null;
                   const workerDesigns = w ? designs.filter((d) => d.worker_id === w.id) : [];
                   const lineTotal = (Number(a.quantity) || 0) * (Number(a.rate) || 0);
+                  const needsDesignNudge = a.category === 'embroidery' && !a.design_number;
                   return (
                     <div key={i} className="p-3 rounded-xl border border-slate-200 dark:border-slate-700 space-y-2">
                       <div className="flex flex-col sm:flex-row gap-2">
@@ -319,14 +320,29 @@ export function OrderForm({
                       </div>
                       <div className="grid grid-cols-3 gap-2">
                         <div>
-                          <label className="text-xs font-semibold text-slate-500">Design #</label>
+                          <label className="text-xs font-semibold text-slate-500 flex items-center gap-1">
+                            Design #
+                            {needsDesignNudge && <span className="text-amber-600 font-normal normal-case">(recommended)</span>}
+                          </label>
                           {workerDesigns.length > 0 ? (
-                            <Select value={a.design_number} onChange={(e) => onDesignSelected(i, e.target.value)} className="text-sm">
+                            <Select
+                              value={a.design_number}
+                              onChange={(e) => onDesignSelected(i, e.target.value)}
+                              className={`text-sm ${needsDesignNudge ? 'ring-1 ring-amber-400 border-amber-400' : ''}`}
+                            >
                               <option value="">— None —</option>
                               {workerDesigns.map((d) => <option key={d.id} value={d.design_number}>{d.design_number} ({d.design_name || d.design_number})</option>)}
                             </Select>
                           ) : (
-                            <Input value={a.design_number} onChange={(e) => updateAssignment(i, { design_number: e.target.value })} placeholder="—" className="text-sm" />
+                            <Input
+                              value={a.design_number}
+                              onChange={(e) => updateAssignment(i, { design_number: e.target.value })}
+                              placeholder={needsDesignNudge ? 'Add a design #' : '—'}
+                              className={`text-sm ${needsDesignNudge ? 'ring-1 ring-amber-400 border-amber-400 placeholder:text-amber-500' : ''}`}
+                            />
+                          )}
+                          {needsDesignNudge && (
+                            <p className="text-[11px] text-amber-600 mt-0.5">Embroidery work usually has a design — you can still skip it if there isn't one.</p>
                           )}
                         </div>
                         <div>
