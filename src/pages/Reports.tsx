@@ -10,7 +10,7 @@ import { fmtMoney, fmtDate, exportCSV, printHTML } from '../lib/format';
 type ReportTab = 'daily' | 'monthly' | 'yearly';
 
 type MetricKey =
-  | 'orders' | 'sales' | 'readymade' | 'fabric' | 'advances' | 'balanceDue'
+  | 'orders' | 'orderValue' | 'sales' | 'readymade' | 'fabric' | 'advances' | 'balanceDue'
   | 'cashIn' | 'cashOut' | 'expenses' | 'profit' | 'cashDrawer'
   | 'workerAdvances' | 'salaryPaid' | 'delivered' | 'notDelivered'
   | 'cashReceived' | 'outstandingReceivables' | 'lossWriteoffs' | 'discounts';
@@ -115,6 +115,10 @@ export function Reports() {
     const base: MetricDef[] = [
       {
         key: 'orders', label: 'Total Orders', value: stats.totalOrders, accent: 'sky',
+        header: orderHeader, rows: filtered.orders.map(orderRow),
+      },
+      {
+        key: 'orderValue', label: 'Total Order Value', value: fmtMoney(stats.totalOrderValue, currency), accent: 'violet',
         header: orderHeader, rows: filtered.orders.map(orderRow),
       },
       {
