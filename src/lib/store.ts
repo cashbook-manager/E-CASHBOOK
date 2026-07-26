@@ -95,3 +95,41 @@ export function useDarkMode() {
 
   return { dark, setDark, toggle: () => setDark((d) => !d) };
 }
+
+// ── Quick Capture receipt queue ──────────────────────────────────────────
+// Lets the header camera button capture several receipt photos in one go,
+// then hands them off to Orders.tsx one at a time — each photo opens the
+// New Order form pre-filled by AI, get reviewed/saved, then the next photo
+// opens automatically until the queue is empty. Files can't be persisted to
+// localStorage, so this lives purely in memory for the current session.
+let captureQueue: File[] = [];
+const captureQueueListeners = new Set<(q: File[]) => void>();
+
+export function useCaptureQueue() {
+  const [queue, setQueueState] = useState(captureQueue);
+
+  useEffect(() => {
+    const listener = (q: File[]) => setQueueState(q);
+    captureQueueListeners.add(listener);
+    return () => { captureQueueListeners.delete(listener); };
+  }, []);
+
+  function notify() {
+    captureQueueListeners.forEach((l) => l(captureQueue));
+  }
+
+  return {
+    queue,
+    /** Add photos to the end of the queue (called when the camera capture modal finishes). */
+    enqueue: (files: File[]) => { captureQueue = [...captureQueue, ...files]; notify(); },
+    /** Remove and return the next photo to process. */
+    dequeue: (): File | undefined => {
+      if (captureQueue.length === 0) return undefined;
+      const [next, ...rest] = captureQueue;
+      captureQueue = rest;
+      notify();
+      return next;
+    },
+    clear: () => { captureQueue = []; notify(); },
+  };
+}
