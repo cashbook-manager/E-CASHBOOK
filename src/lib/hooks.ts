@@ -100,6 +100,7 @@ export function lastNMonths(n: number): string[] {
 
 export interface BusinessStats {
   totalOrders: number;
+  totalOrderValue: number;
   totalSales: number;
   advanceReceived: number;
   customerBalanceDue: number;
@@ -137,6 +138,11 @@ export function computeStats(
 
   // Total Orders = count of all orders
   const totalOrders = orders.length;
+
+  // Total Order Value = sum of the total amount of every order taken in this period,
+  // regardless of sale type or delivery status. Different from Total Sales, which only
+  // counts delivered/immediate revenue — this is the full value of business booked.
+  const totalOrderValue = orders.reduce((s, o) => s + Number(o.total_amount || 0), 0);
 
   // Tailoring sales = delivered tailoring orders
   const tailoringOrders = orders.filter((o) => o.sale_type === 'tailoring');
@@ -224,7 +230,7 @@ export function computeStats(
   const notDeliveredCount = orders.filter((o) => o.status !== 'delivered').length;
 
   return {
-    totalOrders, totalSales, advanceReceived, customerBalanceDue,
+    totalOrders, totalOrderValue, totalSales, advanceReceived, customerBalanceDue,
     readymadeSales, fabricSales, tailoringSales,
     todaysCashIn, todaysCashOut, totalExpenses, cashInDrawer, profit,
     deliveredCount, notDeliveredCount, workerAdvancesTotal, salaryPaidTotal,
