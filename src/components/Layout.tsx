@@ -1,14 +1,15 @@
 import { useEffect, useMemo, useState } from 'react';
 import {
   LayoutDashboard, ShoppingBag, Bell, Users, UserSquare2, BookOpen, FileBarChart, Settings as SettingsIcon,
-  Menu, X, Moon, Sun, Calendar, Search, ChevronLeft, ChevronRight, Scissors, LogOut, Wallet, Store,
+  Menu, X, Moon, Sun, Calendar, Search, ChevronLeft, ChevronRight, Scissors, LogOut, Wallet, Store, Camera,
 } from 'lucide-react';
 import { useRoute, navigate } from '../lib/router';
-import { useSettings, useDarkMode, useSelectedBranch } from '../lib/store';
+import { useSettings, useDarkMode, useSelectedBranch, useCaptureQueue } from '../lib/store';
 import { useAdminAuth } from '../lib/auth';
 import { fmtDate, todayISO, daysUntil } from '../lib/format';
 import { supabase } from '../lib/supabase';
 import type { Order, Shop } from '../lib/types';
+import { QuickCaptureModal } from './QuickCaptureModal';
 
 const NAV = [
   { name: 'dashboard', label: 'Dashboard', icon: LayoutDashboard, path: '/dashboard' },
@@ -34,6 +35,8 @@ export function Layout({ children, onSearch }: { children: React.ReactNode; onSe
   const [orders, setOrders] = useState<Order[]>([]);
   const [shops, setShops] = useState<Shop[]>([]);
   const { branch, setBranch } = useSelectedBranch();
+  const [captureOpen, setCaptureOpen] = useState(false);
+  const { enqueue } = useCaptureQueue();
 
   useEffect(() => {
     supabase
@@ -147,6 +150,15 @@ export function Layout({ children, onSearch }: { children: React.ReactNode; onSe
               <Menu size={22} />
             </button>
 
+            {/* Quick Capture receipt camera */}
+            <button
+              onClick={() => setCaptureOpen(true)}
+              title="Quick Capture: snap receipt photos and create orders"
+              className="p-2 rounded-xl bg-sky-600 text-white hover:bg-sky-500 active:scale-95 transition flex-shrink-0"
+            >
+              <Camera size={18} />
+            </button>
+
             {/* Branch switcher */}
             {shops.length > 0 && (
               <div className="relative flex items-center gap-1.5 sm:gap-2 pl-1 pr-1.5 sm:pr-2 py-1.5 rounded-xl bg-slate-100 dark:bg-slate-900">
@@ -247,6 +259,16 @@ export function Layout({ children, onSearch }: { children: React.ReactNode; onSe
 
         <main className="p-4 sm:p-6 max-w-7xl mx-auto">{children}</main>
       </div>
+
+      <QuickCaptureModal
+        open={captureOpen}
+        onClose={() => setCaptureOpen(false)}
+        onDone={(files) => {
+          setCaptureOpen(false);
+          enqueue(files);
+          navigate('/orders');
+        }}
+      />
     </div>
   );
 }
