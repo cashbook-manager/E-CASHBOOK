@@ -36,7 +36,7 @@ interface AssignmentDraft {
 }
 
 export function OrderForm({
-  open, onClose, onSaved, order, salesmen, workers,
+  open, onClose, onSaved, order, salesmen, workers, autoScanFile, queuePosition, queueTotal,
 }: {
   open: boolean;
   onClose: () => void;
@@ -44,13 +44,25 @@ export function OrderForm({
   order: Order | null;
   salesmen: Salesman[];
   workers: Worker[];
+  /** When set (from the header's Quick Capture flow), this photo is scanned automatically on open. */
+  autoScanFile?: File | null;
+  queuePosition?: number;
+  queueTotal?: number;
 }) {
   const [form, setForm] = useState<Partial<Order>>({});
   const [assignments, setAssignments] = useState<AssignmentDraft[]>([]);
   const [designs, setDesigns] = useState<WorkerDesign[]>([]);
   const [uploading, setUploading] = useState(false);
+  const [scanning, setScanning] = useState(false);
+  const [scanResult, setScanResult] = useState<{ confidence: string; uncertain: string[] } | null>(null);
   const [saving, setSaving] = useState(false);
   const { shops, accounts } = usePaymentAccounts();
+
+  // Quick Capture hand-off: a photo arrived from the header camera — scan it right away.
+  useEffect(() => {
+    if (autoScanFile) scanReceipt(autoScanFile);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [autoScanFile]);
 
   useEffect(() => {
     supabase.from('worker_designs').select('*').then(({ data }) => {
@@ -120,6 +132,49 @@ export function OrderForm({
       set('receipt_image', data.publicUrl);
     }
     setUploading(false);
+  }
+
+  async function scanReceipt(file: File) {
+    setScanning(true);
+    setScanResult(null);
+    try {
+      // Also save the photo itself as the receipt image, same as manual upload.
+      await uploadReceipt(file);
+
+      const base64 = await new Promise<string>((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve((reader.result as string).split(',')[1]);
+        reader.onerror = () => reject(new Error('Could not read image file'));
+        reader.readAsDataURL(file);
+      });
+
+      const { data, error } = await supabase.functions.invoke('scan-receipt', {
+        body: { image_base64: base64, media_type: file.type || 'image/jpeg' },
+      });
+
+      if (error || data?.error) {
+        alert(`Could not scan receipt: ${data?.error || error?.message || 'unknown error'}`);
+        return;
+      }
+
+      const f = data.fields || {};
+      setForm((prev) => ({
+        ...prev,
+        receipt_number: f.receipt_number || prev.receipt_number,
+        customer_name: f.customer_name || prev.customer_name,
+        whatsapp_number: f.whatsapp_number || prev.whatsapp_number,
+        order_type: f.order_type || prev.order_type,
+        order_date: f.order_date || prev.order_date,
+        delivery_date: f.delivery_date || prev.delivery_date,
+        total_amount: f.total_amount ?? prev.total_amount,
+        advance: f.advance ?? prev.advance,
+        measurement: f.measurement || prev.measurement,
+        notes: f.notes || prev.notes,
+      }));
+      setScanResult({ confidence: f.confidence || 'medium', uncertain: f.uncertain_fields || [] });
+    } finally {
+      setScanning(false);
+    }
   }
 
   async function save() {
@@ -237,6 +292,44 @@ export function OrderForm({
       }
     >
       <div className="space-y-4">
+        {!order && (
+          <div className="p-3 rounded-xl border border-dashed border-sky-300 bg-sky-50 dark:bg-sky-950/30 dark:border-sky-800">
+            {!!queueTotal && queueTotal > 0 && (
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-xs font-bold text-sky-700 dark:text-sky-300 bg-white dark:bg-sky-900 rounded-full px-2.5 py-1">
+                  Receipt {queuePosition} of {queueTotal}
+                </span>
+                {(queuePosition || 0) < (queueTotal || 0) && (
+                  <span className="text-xs text-sky-600 dark:text-sky-400">{(queueTotal || 0) - (queuePosition || 0)} more waiting</span>
+                )}
+              </div>
+            )}
+            <div className="flex items-center gap-3">
+              <input
+                type="file" accept="image/*" capture="environment"
+                onChange={(e) => e.target.files?.[0] && scanReceipt(e.target.files[0])}
+                disabled={scanning}
+                className="text-sm w-full file:mr-3 file:py-2 file:px-4 file:rounded-lg file:border-0 file:bg-sky-600 file:text-white file:font-semibold hover:file:bg-sky-500 cursor-pointer disabled:opacity-60"
+              />
+              {scanning && <span className="text-sm text-sky-700 dark:text-sky-300 flex-shrink-0">Reading receipt…</span>}
+            </div>
+            <p className="text-xs text-sky-700 dark:text-sky-300 mt-1.5">
+              Snap or upload a photo of a handwritten receipt — AI will try to fill the fields below. Always review before saving.
+            </p>
+            {scanResult && (
+              <div className={`mt-2 text-xs rounded-lg px-3 py-2 ${
+                scanResult.confidence === 'low' ? 'bg-rose-100 text-rose-700 dark:bg-rose-950/50 dark:text-rose-300'
+                  : scanResult.confidence === 'medium' ? 'bg-amber-100 text-amber-700 dark:bg-amber-950/50 dark:text-amber-300'
+                  : 'bg-emerald-100 text-emerald-700 dark:bg-emerald-950/50 dark:text-emerald-300'
+              }`}>
+                Scan confidence: <span className="font-semibold capitalize">{scanResult.confidence}</span>.
+                {scanResult.uncertain.length > 0 && ` Double-check: ${scanResult.uncertain.join(', ')}.`}
+                {' '}Please verify every field below before saving.
+              </div>
+            )}
+          </div>
+        )}
+
         <div>
           <Label>Sale Type</Label>
           <div className="grid grid-cols-3 gap-2">
