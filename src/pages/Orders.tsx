@@ -8,7 +8,7 @@ import { OrderForm } from '../components/OrderForm';
 import { OrderDetail } from '../components/OrderDetail';
 import { useDashboardData } from '../lib/hooks';
 import { fmtMoney, fmtDate, daysUntil } from '../lib/format';
-import { useSettings, useSelectedBranch, filterByBranch } from '../lib/store';
+import { useSettings, useSelectedBranch, filterByBranch, useCaptureQueue } from '../lib/store';
 
 const STATUS_FILTERS = ['all', 'pending', 'cutting', 'stitching', 'ready', 'delivered'] as const;
 const SALE_TYPE_FILTERS = ['all', 'tailoring', 'readymade', 'fabric'] as const;
@@ -25,6 +25,32 @@ export function Orders() {
   const [formOpen, setFormOpen] = useState(false);
   const [editing, setEditing] = useState<Order | null>(null);
   const [selected, setSelected] = useState<Order | null>(null);
+  const { queue, dequeue } = useCaptureQueue();
+  const [activeScanFile, setActiveScanFile] = useState<File | null>(null);
+  const [scanQueueTotal, setScanQueueTotal] = useState(0);
+
+  // Quick Capture hand-off: as soon as photos are waiting and no form is already open,
+  // pop the next one and open a fresh New Order form with it, pre-scanning automatically.
+  useEffect(() => {
+    if (queue.length > 0 && !formOpen && !activeScanFile) {
+      setScanQueueTotal((t) => Math.max(t, queue.length));
+      const next = dequeue();
+      if (next) {
+        setActiveScanFile(next);
+        setEditing(null);
+        setFormOpen(true);
+      }
+    }
+    if (queue.length === 0 && !formOpen) {
+      setScanQueueTotal(0);
+    }
+  }, [queue, formOpen]);
+
+  function advanceScanQueue() {
+    setActiveScanFile(null);
+    setFormOpen(false);
+    // The effect above will pick up the next queued file, if any, on the next render.
+  }
 
   useEffect(() => {
     supabase.from('orders').select('*').order('created_at', { ascending: false }).then(({ data: d }) => {
@@ -60,6 +86,7 @@ export function Orders() {
   // that's what made worker assignments look like they'd vanished after Save.
   function handleOrderSaved() {
     const wasEditingId = editing?.id;
+    const wasScanning = !!activeScanFile;
     supabase.from('orders').select('*').order('created_at', { ascending: false }).then(({ data: d }) => {
       const list = (d as Order[]) || [];
       setOrders(list);
@@ -69,6 +96,7 @@ export function Orders() {
       }
     });
     data.refresh();
+    if (wasScanning) advanceScanQueue();
   }
 
   return (
@@ -124,7 +152,10 @@ export function Orders() {
           order={editing}
           salesmen={data.salesmen}
           workers={data.workers}
-          onClose={() => setFormOpen(false)}
+          autoScanFile={activeScanFile}
+          queuePosition={activeScanFile ? scanQueueTotal - queue.length : 0}
+          queueTotal={activeScanFile ? scanQueueTotal : 0}
+          onClose={() => { if (activeScanFile) advanceScanQueue(); else setFormOpen(false); }}
           onSaved={handleOrderSaved}
         />
       )}
